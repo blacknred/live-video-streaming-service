@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <title>WebRTC Scalable Broadcast</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <style>
+        body {
+            padding: 50px;
+            font: 14px Helvetica, Arial;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .center {
+            width: 30%,
+        }
+        .center-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+    </style>
+</head>
+
+<body>
+    <section class="center">
+        <h1></h1>
+        <div class="center-top">
+            <input type="text" id="broadcast-id" value="room-xyz" autocorrect=off autocapitalize=off size=20>
+            <button id="open-or-join">Open or Join Broadcast</button>
+            <span id="broadcast-viewers-counter"></span>
+        </div>
+        <video id="video-preview" controls loop></video>
+    </section>
+
+    <script src="/rtcMultiConn.js"></script>
+    <!-- <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script> -->
+    <script src="/webrtc-adapter/out/adapter.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- <script src="https://cdn.webrtc-experiment.com/RecordRTC.js"></script> -->
+    <script src="/index.js"></script>
+
+    <script src="https://cdn.webrtc-experiment.com/common.js"></script>
+</body>
+
+</html>

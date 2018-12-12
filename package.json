@@ -2,9 +2,10 @@
   "name": "live-video-streaming-service",
   "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "DEBUG=socket.io* nodemon src/server"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,17 @@
   "bugs": {
     "url": "https://github.com/blacknred/live-video-streaming-service/issues"
   },
-  "homepage": "https://github.com/blacknred/live-video-streaming-service#readme"
+  "homepage": "https://github.com/blacknred/live-video-streaming-service#readme",
+  "dependencies": {
+    "eslint": "^5.10.0",
+    "kcors": "^2.2.2",
+    "koa": "^2.6.2",
+    "koa-helmet": "^4.0.0",
+    "koa-logger": "^3.2.0",
+    "koa-router": "^7.4.0",
+    "koa-static": "^5.0.0",
+    "nodemon": "^1.18.8",
+    "socket.io": "^2.2.0",
+    "webrtc-adapter": "^7.1.1"
+  }
 }
