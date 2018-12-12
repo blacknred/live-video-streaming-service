@@ -1,0 +1,19 @@
+{
+  "name": "live-video-streaming-service",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blacknred/live-video-streaming-service.git"
+  },
+  "author": "tretyakov.dmi@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blacknred/live-video-streaming-service/issues"
+  },
+  "homepage": "https://github.com/blacknred/live-video-streaming-service#readme"
+}
