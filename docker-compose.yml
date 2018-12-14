@@ -1,0 +1,30 @@
+version: '3'
+
+services:
+
+  server:
+    container_name: live-video-streaming-server
+    build: ./server
+    ports:
+      - '3000:3000'
+    volumes:
+      - './server:/usr/src/app'
+      - './server/package.json:/usr/src/package.json'
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - TOKEN_SECRET=\x02\xf3\xf7r\t\x9f\xee\xbbu\xb1\xe1\x90\xfe
+      - TOKEN_SECRET_2=\x02\xf3\xf7r\t\x9f\xee\xbbu\xb1\xe1\x90\xfe'\xab\xa6L6\xdd\x8d[\xccO\xfe
+
+  web-client:
+    container_name: live-video-streaming-web-client
+    build: ./client
+    volumes:
+      - './client:/usr/src/app'
+      - '/usr/src/app/node_modules'
+    ports:
+      - '3003:3000'
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - server

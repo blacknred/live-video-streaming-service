@@ -1,0 +1,34 @@
+{
+  "name": "live-video-streaming-service-server",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "DEBUG=socket.io* nodemon app/src/server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blacknred/live-video-streaming-service.git"
+  },
+  "author": "tretyakov.dmi@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blacknred/live-video-streaming-service/issues"
+  },
+  "homepage": "https://github.com/blacknred/live-video-streaming-service#readme",
+  "dependencies": {
+    "eslint": "^5.10.0",
+    "kcors": "^2.2.2",
+    "koa": "^2.6.2",
+    "koa-helmet": "^4.0.0",
+    "koa-logger": "^3.2.0",
+    "koa-router": "^7.4.0",
+    "koa-static": "^5.0.0",
+    "nodemon": "^1.18.8",
+    "socket.io": "^2.2.0"
+  },
+  "devDependencies": {
+    "eslint-config-airbnb": "^17.1.0"
+  }
+}
