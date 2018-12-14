@@ -46,7 +46,7 @@ class ErrorBoundary extends React.Component {
     render() {
         const { error, errorInfo } = this.state;
         const { children, classes } = this.props;
-        if (error) {
+        if (errorInfo) {
             // You can render any custom fallback UI
             return (
                 <div className={classes.root}>
@@ -55,7 +55,7 @@ class ErrorBoundary extends React.Component {
                         variant="h6"
                         color="inherit"
                     >
-                        {error}
+                        {error && error.toString()}
                     </Typography>
                     <Typography
                         variant="body2"

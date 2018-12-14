@@ -8,16 +8,18 @@ module.exports = {
         "react/jsx-indent-props": "off",
         "no-console": "off",
         "react/no-children-prop": "off",
-
         "implicit-arrow-linebreak": [0, "as-beside"],
         "react/require-default-props": [0],
-        "react/prefer-stateless-function": [0, { "ignorePureComponents": true }]
+        "react/prefer-stateless-function": [0, { "ignorePureComponents": true }],
+        "no-alert": "off",
     },
     "globals": {
+        "window": 1,
         "document": 1,
         "localStorage": 1,
         "navigator": 1,
         "FormData": 1,
         "Audio": 1,
+        "alert": 1,
     }
 };

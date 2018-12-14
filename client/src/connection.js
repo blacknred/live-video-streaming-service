@@ -1,27 +1,28 @@
-'use strict';
+/*
+recording is disabled because it is resulting for browser-crash
+if you enable below line, please also uncomment above "RecordRTC.js"
+*/
+const enableRecordings = false;
+const connection = new window.RTCMultiConnection();
 
-(function () {
-    // recording is disabled because it is resulting for browser-crash
-    // if you enable below line, please also uncomment above "RecordRTC.js"
-    const enableRecordings = false;
-    const connection = new window.RTCMultiConnection();
+export const setConnection = async () => {
     connection.enableScalableBroadcast = true; // its mandatory in v3
     // each relaying-user should serve only 1 users
     connection.maxRelayLimitPerUser = 1;
     // we don't need to keep room-opened
     // scalable-broadcast.js will handle stuff itself.
     connection.autoCloseEntireSession = true;
-    connection.socketURL = 'http://localhost:3000/'; //process.env.REACT_APP_WS_HOST || '/'; // socket.io server
+    connection.socketURL = process.env.REACT_APP_WS_HOST; // socket.io server
     connection.socketMessageEvent = 'scalable-media-broadcast-demo';
     // document.getElementById('broadcast-id').value = connection.userid;
-
 
 
     /* SET BROADCASTER */
     connection.connectSocket((socket) => {
         // log status
         socket.on('logs', (log) => {
-            document.getElementById('status').innerText = log;
+            console.log('io logs: ', log);
+            // document.getElementById('status').innerText = log;
         });
         // when a broadcast is absent
         socket.on('start-broadcasting', (typeOfStreams) => {
@@ -29,7 +30,7 @@
             // host i.e. sender should always use this!
             connection.sdpConstraints.mandatory = {
                 OfferToReceiveVideo: false,
-                OfferToReceiveAudio: false
+                OfferToReceiveAudio: false,
             };
             connection.session = typeOfStreams;
             // "open" method here will capture media-stream
@@ -43,26 +44,26 @@
             connection.session = hintsToJoinBroadcast.typeOfStreams;
             connection.sdpConstraints.mandatory = {
                 OfferToReceiveVideo: !!connection.session.video,
-                OfferToReceiveAudio: !!connection.session.audio
+                OfferToReceiveAudio: !!connection.session.audio,
             };
             connection.broadcastId = hintsToJoinBroadcast.broadcastId;
             connection.join(hintsToJoinBroadcast.userid);
         });
-        socket.on('rejoin-broadcast', (broadcastId) => {
-            console.log('rejoin-broadcast', broadcastId);
-            connection.attachStreams = [];
-            socket.emit('check-broadcast-presence', broadcastId, (isBroadcastExists) => {
-                if (!isBroadcastExists) {
-                    // the first person (i.e. real-broadcaster) MUST set his user-id
-                    connection.userid = broadcastId;
-                }
-                socket.emit('join-broadcast', {
-                    broadcastId: broadcastId,
-                    userid: connection.userid,
-                    typeOfStreams: connection.session
-                });
-            });
-        });
+        // socket.on('rejoin-broadcast', (broadcastId) => {
+        //     console.log('rejoin-broadcast', broadcastId);
+        //     connection.attachStreams = [];
+        //     socket.emit('check-broadcast-presence', broadcastId, (isBroadcastExists) => {
+        //         if (!isBroadcastExists) {
+        //             // the first person (i.e. real-broadcaster) MUST set his user-id
+        //             connection.userid = broadcastId;
+        //         }
+        //         socket.emit('join-broadcast', {
+        //             broadcastId,
+        //             userid: connection.userid,
+        //             typeOfStreams: connection.session,
+        //         });
+        //     });
+        // });
         socket.on('broadcast-stopped', (broadcastId) => {
             // location.reload();
             console.error('broadcast-stopped', broadcastId);
@@ -74,7 +75,7 @@
     /* UI EVENTS */
     const allRecordedBlobs = [];
     // const startButton = document.getElementById('open-or-join');
-    // const videoPreview = document.getElementById('video-preview');
+    const videoPreview = document.getElementById('video-preview');
     // const txtBroadcastId = document.getElementById('broadcast-id');
     // window.onbeforeunload = () => startButton.disabled = false; // Firefox fix
     // startButton.onclick = () => {
@@ -106,6 +107,32 @@
     //         });
     //     });
     // };
+    function repeatedlyRecordStream(stream) {
+        if (!enableRecordings) {
+            return;
+        }
+        connection.currentRecorder = window.RecordRTC(stream, {
+            type: 'video',
+        });
+        connection.currentRecorder.startRecording();
+        setTimeout(() => {
+            if (connection.isUpperUserLeft || !connection.currentRecorder) {
+                return;
+            }
+            connection.currentRecorder.stopRecording(() => {
+                allRecordedBlobs.push(connection.currentRecorder.getBlob());
+                if (connection.isUpperUserLeft) {
+                    return;
+                }
+                connection.currentRecorder = null;
+                repeatedlyRecordStream(stream);
+            });
+        }, 30 * 1000); // 30-seconds
+    }
+    // function disableInputButtons() {
+    //     document.getElementById('open-or-join').disabled = true;
+    //     document.getElementById('broadcast-id').disabled = true;
+    // }
     connection.onstream = (event) => {
         if (connection.isInitiator && event.type !== 'local') {
             return;
@@ -117,13 +144,13 @@
         if (event.type === 'local') {
             videoPreview.muted = true;
         }
-        if (connection.isInitiator == false && event.type === 'remote') {
+        if (connection.isInitiator === false && event.type === 'remote') {
             // he is merely relaying the media
             connection.dontCaptureUserMedia = true;
             connection.attachStreams = [event.stream];
             connection.sdpConstraints.mandatory = {
                 OfferToReceiveAudio: false,
-                OfferToReceiveVideo: false
+                OfferToReceiveVideo: false,
             };
             connection.getSocket((socket) => {
                 socket.emit('can-relay-broadcast');
@@ -180,7 +207,7 @@
                 const lastBlob = allRecordedBlobs[allRecordedBlobs.length - 1];
                 videoPreview.src = URL.createObjectURL(lastBlob);
                 videoPreview.play();
-                allRecordedBlobs = [];
+                allRecordedBlobs.length = 0;
             } else if (connection.currentRecorder) {
                 const recorder = connection.currentRecorder;
                 connection.currentRecorder = null;
@@ -196,42 +223,14 @@
             }
         });
     };
-    connection.onNumberOfBroadcastViewersUpdated = (event) => {
-        if (!connection.isInitiator) return;
-        console.log(event);
-        document.getElementById('broadcast-viewers-counter')
-            .innerText = 'Viewers: ' + event.numberOfBroadcastViewers;
-    };
-
-    function repeatedlyRecordStream(stream) {
-        if (!enableRecordings) {
-            return;
-        }
-        connection.currentRecorder = RecordRTC(stream, {
-            type: 'video'
-        });
-        connection.currentRecorder.startRecording();
-        setTimeout(() => {
-            if (connection.isUpperUserLeft || !connection.currentRecorder) {
-                return;
-            }
-            connection.currentRecorder.stopRecording(function () {
-                allRecordedBlobs.push(connection.currentRecorder.getBlob());
-                if (connection.isUpperUserLeft) {
-                    return;
-                }
-                connection.currentRecorder = null;
-                repeatedlyRecordStream(stream);
-            });
-        }, 30 * 1000); // 30-seconds
-    }
 
 
-
-    // function disableInputButtons() {
-    //     document.getElementById('open-or-join').disabled = true;
-    //     document.getElementById('broadcast-id').disabled = true;
-    // }
+    // connection.onNumberOfBroadcastViewersUpdated = (event) => {
+    //     if (!connection.isInitiator) return;
+    //     console.log(event);
+    //     document.getElementById('broadcast-viewers-counter')
+    //         .innerText = `Viewers: ${event.numberOfBroadcastViewers}`;
+    // };
 
     /* Handling broadcast-id */
     // let broadcastId = localStorage.getItem(connection.socketMessageEvent);
@@ -240,6 +239,6 @@
     // txtBroadcastId.onkeyup = txtBroadcastId.oninput = txtBroadcastId.onpaste = () => {
     //     localStorage.setItem(connection.socketMessageEvent, this.value);
     // };
+};
 
-    window.connection = connection;
-})();
+export default connection;

@@ -17,8 +17,15 @@ import {
     InputAdornment,
     ListItemAvatar,
 } from '@material-ui/core';
-import { VideocamOff, Person } from '@material-ui/icons';
+import {
+    VideocamOff,
+    People,
+    Favorite,
+    Cancel,
+} from '@material-ui/icons';
 import { withStyles } from '@material-ui/core/styles';
+
+import Connection from './connection';
 
 const ENTER_KEY = 13;
 
@@ -32,13 +39,31 @@ const styles = theme => ({
             flexDirection: 'column',
         },
     },
+    left: {
+        flexBasis: '40%',
+    },
     preview: {
         flexGrow: 1,
+        flexBasis: '50%',
     },
-    offlineButton: {
+    fixedButtons: {
         position: 'fixed',
-        left: 20,
-        top: 20,
+        left: theme.spacing.unit * 3,
+        top: theme.spacing.unit * 3,
+        bottom: theme.spacing.unit * 3,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        [theme.breakpoints.down('md')]: {
+            bottom: '9%',
+            opacity: 0.5,
+            '&:hover': {
+                opacity: 1,
+            },
+        },
+        [theme.breakpoints.only('xs')]: {
+            bottom: '54%',
+        },
     },
     chat: {
         flexBasis: '40%',
@@ -49,7 +74,14 @@ const styles = theme => ({
     chatList: {
         flexGrow: 1,
         overflowY: 'auto',
-        paddingTop: theme.spacing.unit * 2,
+        [theme.breakpoints.up('xs')]: {
+            padding: `${theme.spacing.unit * 3}px
+            ${theme.spacing.unit}px`,
+        },
+        [theme.breakpoints.up('sm')]: {
+            padding: `${theme.spacing.unit * 5}px
+            ${theme.spacing.unit * 3}px`,
+        },
     },
     messageForm: {
         height: 50,
@@ -66,13 +98,61 @@ class Room extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            broadcastId: null,
+            isMyStream: true,
+            viewersCount: 0,
             text: '',
             messages: [],
-            viewersCount: 0,
         };
     }
 
     componentDidMount() {
+        this.chatFetchingHandler();
+
+        console.log(Connection);
+
+        /* handle broadcasting */
+        let { match: { params: { broadcastId } } } = this.props;
+        // in case of non valid broadcastId set new one
+        if (!broadcastId || broadcastId.replace(/^\s+|\s+$/g, '').length <= 0) {
+            broadcastId = Connection.token();
+        }
+        Connection.extra.broadcastId = broadcastId;
+        Connection.session = {
+            audio: true,
+            video: true,
+            oneway: true,
+        };
+        this.setState({ broadcastId });
+        Connection.getSocket((socket) => {
+            socket.emit('check-broadcast-presence', broadcastId, (isBroadcastExists) => {
+                console.log('check-broadcast-presence', broadcastId, isBroadcastExists);
+                if (!isBroadcastExists) {
+                    // start broadcast by set broadcaster' userid
+                    Connection.userid = broadcastId;
+                    this.setState({ isMyStream: true });
+                }
+                // join broadcast
+                socket.emit('join-broadcast', {
+                    broadcastId,
+                    userid: Connection.userid,
+                    typeOfStreams: Connection.session,
+                });
+                this.setState({ isMyStream: false });
+            });
+        });
+
+
+        Connection.onNumberOfBroadcastViewersUpdated = (event) => {
+            // if (!Connection.isInitiator) return;
+            // document.getElementById('broadcast-viewers-counter')
+            //     .innerText = `Viewers: ${event.numberOfBroadcastViewers}`;
+            console.log(event);
+            this.setState({ viewersCount: event.numberOfBroadcastViewers });
+        };
+    }
+
+    chatFetchingHandler = () => {
         // fake fetching
         const messages = [
             {
@@ -107,38 +187,11 @@ class Room extends React.Component {
             },
         ];
         this.setState({ messages });
-
-
-        // /* handle broadcasting */
-
-        // const { match: { params: { broadcastId } } } = this.props;
-        // // in case of non valid broadcastId set new one
-        // if (!broadcastId || broadcastId.replace(/^\s+|\s+$/g, '').length <= 0) {
-        //     broadcastId = connection.token();
-        // }
-        // connection.extra.broadcastId = broadcastId;
-        // connection.session = {
-        //     audio: true,
-        //     video: true,
-        //     oneway: true
-        // };
-        // connection.getSocket((socket) => {
-        //     socket.emit('check-broadcast-presence', broadcastId, (isBroadcastExists) => {
-        //         if (!isBroadcastExists) {
-        //             // the first person (i.e. real-broadcaster) MUST set his user-id
-        //             connection.userid = broadcastId;
-        //         }
-        //         console.log('check-broadcast-presence', broadcastId, isBroadcastExists);
-        //         socket.emit('join-broadcast', {
-        //             broadcastId,
-        //             userid: connection.userid,
-        //             typeOfStreams: connection.session
-        //         });
-        //     });
-        // });
     }
 
-    onStopStreamHandler = () => { }
+    onStopHandler = () => { }
+
+    onLikeHandler = () => { }
 
     onTextChangeHandler = ({ target: { name, value } }) => {
         this.setState({ [name]: value });
@@ -160,7 +213,9 @@ class Room extends React.Component {
     }
 
     render() {
-        const { text, messages, viewersCount } = this.state;
+        const {
+            text, messages, viewersCount, isMyStream, broadcastId,
+        } = this.state;
         const { classes, width } = this.props;
         const newMessageForm = (
             <>
@@ -175,7 +230,7 @@ class Room extends React.Component {
                         name="text"
                         autoComplete="off"
                         value={text}
-                        placeholder="New message"
+                        placeholder={`Message to ${broadcastId}`}
                         onChange={this.onTextChangeHandler}
                         onKeyDown={
                             e => e.keyCode === ENTER_KEY
@@ -189,7 +244,7 @@ class Room extends React.Component {
                                 <Chip
                                     avatar={(
                                         <Avatar>
-                                            <Person />
+                                            <People />
                                         </Avatar>
                                     )}
                                     id="broadcast-viewers-counter"
@@ -205,6 +260,9 @@ class Room extends React.Component {
 
         return (
             <div className={classes.root}>
+                <Hidden mdDown>
+                    <div className={classes.left} />
+                </Hidden>
                 <video
                     id="video-preview"
                     className={classes.preview}
@@ -213,26 +271,32 @@ class Room extends React.Component {
                 >
                     <track default kind="captions" src="" />
                 </video>
-                <Fab
-                    // id="open-or-join"
-                    // <button >Open or Join Broadcast</button>
-                    component={Link}
-                    to="/"
-                    className={classes.offlineButton}
-                    color="secondary"
-                    variant={width === 'xs' ? 'round' : 'extended'}
-                    size={width === 'xs' ? 'small' : 'large'}
-                    onClick={this.onStopStreamHandler}
-                >
-                    <VideocamOff />
-                    {width !== 'xs' && <span>&nbsp;Go Offline</span>}
-                </Fab>
+                <div className={classes.fixedButtons}>
+                    <Fab
+                        component={Link}
+                        to="/"
+                        color="secondary"
+                        size={width === 'xs' ? 'medium' : 'large'}
+                        variant={width === 'xs' ? 'round' : 'extended'}
+                        onClick={this.onStopHandler}
+                    >
+                        {isMyStream ? <VideocamOff /> : <Cancel />}
+                        {width !== 'xs' && (
+                            <span>
+                                &nbsp;
+                                {isMyStream ? 'Turn off' : 'Leave'}
+                            </span>
+                        )}
+                    </Fab>
+                    <Fab
+                        color="primary"
+                        size={width === 'xs' ? 'small' : 'large'}
+                        onClick={this.onLikeHandler}
+                    >
+                        <Favorite />
+                    </Fab>
+                </div>
                 <div className={classes.chat}>
-                    {/* <Toolbar variant="dense">
-                        {<span id="status" />}
-                        <input type="text" id="broadcast-id"
-                        value="room-xyz" autocorrect=off autocapitalize=off size=20>
-                    </Toolbar> */}
                     <List className={classes.chatList}>
                         {messages.map(({
                             id, avatar, author, message,
@@ -259,7 +323,7 @@ class Room extends React.Component {
                             </ListItem>
                         ))}
                     </List>
-                    <Hidden mdDown>
+                    <Hidden only="xs">
                         {newMessageForm}
                     </Hidden>
                 </div>

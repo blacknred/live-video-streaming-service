@@ -9,7 +9,10 @@ import Home from './Home';
 import Room from './Room';
 import ErrorBoundary from './ErrorBoundary';
 
+import { setConnection } from './connection';
 import registerServiceWorker from './registerServiceWorker';
+
+setConnection();
 
 const App = () => (
     <React.Fragment>
@@ -18,7 +21,7 @@ const App = () => (
             <BrowserRouter>
                 <Switch>
                     <Route path="/" exact component={Home} />
-                    <Route path="/stream/:streamId?" exact component={Room} />
+                    <Route path="/stream/:broadcastId?" exact component={Room} />
                     <Redirect to="/" />
                 </Switch>
             </BrowserRouter>
