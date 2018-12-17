@@ -1,7 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 
 import {
+    Button,
     Typography,
 } from '@material-ui/core';
 import { Report } from '@material-ui/icons';
@@ -12,12 +14,15 @@ const styles = theme => ({
         flexGrow: 1,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        padding: theme.spacing.unit,
+        width: 500,
+        // minHeight: 500,
+        margin: `${theme.mixins.toolbar.minHeight}px auto`,
     },
     icon: {
-        height: '3em',
+        height: theme.spacing.unit * 15,
+        width: theme.spacing.unit * 15,
     },
 });
 
@@ -46,23 +51,40 @@ class ErrorBoundary extends React.Component {
     render() {
         const { error, errorInfo } = this.state;
         const { children, classes } = this.props;
+        const message = error && error.toString();
+        console.log(error, errorInfo);
         if (errorInfo) {
             // You can render any custom fallback UI
             return (
                 <div className={classes.root}>
-                    <Report className={classes.icon} />
+                    <Report
+                        className={classes.icon}
+                        color="disabled"
+                    />
+                    <br />
+                    <br />
                     <Typography
-                        variant="h6"
+                        variant="h4"
                         color="inherit"
+                        paragraph
                     >
-                        {error && error.toString()}
+                        {message && message.substr(message.indexOf(' ') + 1)}
                     </Typography>
                     <Typography
                         variant="body2"
                         color="textSecondary"
+                        paragraph
                     >
                         {errorInfo.componentStack}
                     </Typography>
+                    <br />
+                    <br />
+                    <Button
+                        variant="outlined"
+                        children="Go to home"
+                        href="/"
+                        size="large"
+                    />
                 </div>
             );
         }

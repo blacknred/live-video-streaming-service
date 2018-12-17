@@ -5,11 +5,11 @@ import {
 } from 'react-router-dom';
 import { CssBaseline } from '@material-ui/core';
 
-import Home from './Home';
-import Room from './Room';
+import Home from './containers/Home';
+import Broadcast from './containers/Broadcast';
 import ErrorBoundary from './ErrorBoundary';
 
-import { setConnection } from './connection';
+import { setConnection } from './signalingConnection';
 import registerServiceWorker from './registerServiceWorker';
 
 setConnection();
@@ -21,7 +21,7 @@ const App = () => (
             <BrowserRouter>
                 <Switch>
                     <Route path="/" exact component={Home} />
-                    <Route path="/stream/:broadcastId?" exact component={Room} />
+                    <Route path="/stream/:broadcastId?" exact component={Broadcast} />
                     <Redirect to="/" />
                 </Switch>
             </BrowserRouter>
