@@ -1,10 +1,20 @@
+const DEFAULT_RELAY_LIMIT = 2;
 const users = {};
+
+/*
+    WebRTC Scalable Broadcast:
+    single broadcast can be relayed over unlimited users
+    without any bandwidth/CPU usage issues.
+    Everything happens by peer-to-peer protocol
+    to broadcast a video over 20+ users.
+*/
+
 
 module.exports = (socket, maxRelayLimitPerUser) => {
     try {
-        maxRelayLimitPerUser = parseInt(maxRelayLimitPerUser) || 2;
+        maxRelayLimitPerUser = parseInt(maxRelayLimitPerUser);
     } catch (e) {
-        maxRelayLimitPerUser = 2;
+        maxRelayLimitPerUser = DEFAULT_RELAY_LIMIT;
     }
 
     socket.on('join-broadcast', (user) => {
@@ -38,8 +48,9 @@ module.exports = (socket, maxRelayLimitPerUser) => {
                 return;
             }
 
+            // join new viewer to free peer
             if (relayUser && user.userid !== user.broadcastId) {
-                var hintsToJoinBroadcast = {
+                const hintsToJoinBroadcast = {
                     typeOfStreams: relayUser.typeOfStreams,
                     userid: relayUser.userid,
                     broadcastId: relayUser.broadcastId
@@ -127,7 +138,9 @@ module.exports = (socket, maxRelayLimitPerUser) => {
 
     function notifyBroadcasterAboutNumberOfViewers(broadcastId, userLeft) {
         try {
-            if (!broadcastId || !users[broadcastId] || !users[broadcastId].socket) return;
+            if (!broadcastId || !users[broadcastId] || !users[broadcastId].socket) {
+                //return;
+            }
             let numberOfBroadcastViewers = getNumberOfBroadcastViewers(broadcastId);
 
             if (userLeft === true) {
@@ -135,8 +148,8 @@ module.exports = (socket, maxRelayLimitPerUser) => {
             }
 
             users[broadcastId].socket.emit('number-of-broadcast-viewers-updated', {
-                numberOfBroadcastViewers: numberOfBroadcastViewers,
-                broadcastId: broadcastId
+                numberOfBroadcastViewers,
+                broadcastId
             });
         } catch (e) {
             //
@@ -144,7 +157,7 @@ module.exports = (socket, maxRelayLimitPerUser) => {
     }
 
 
-    // this even is called from "signaling-server.js"
+    // this event is called from "signaling-server.js"
     socket.ondisconnect = () => {
         try {
             if (!socket.isScalableBroadcastSocket) return;
@@ -249,42 +262,37 @@ function askNestedUsersToRejoin(relayReceivers) {
 
 function getFirstAvailableBroadcaster(broadcastId, maxRelayLimitPerUser) {
     try {
-        var broadcastInitiator = users[broadcastId];
+        const broadcastInitiator = users[broadcastId];
+        
+        /* Priority: initiator, lastRelayUser, any free user */
 
         // if initiator is capable to receive users
         if (broadcastInitiator && broadcastInitiator.relayReceivers.length < maxRelayLimitPerUser) {
             return broadcastInitiator;
         }
 
-        // otherwise if initiator knows who is current relaying user
+        // if current relaying user known by initiator is capable to receive users
         if (broadcastInitiator && broadcastInitiator.lastRelayuserid) {
-            var lastRelayUser = users[broadcastInitiator.lastRelayuserid];
+            const lastRelayUser = users[broadcastInitiator.lastRelayuserid];
             if (lastRelayUser && lastRelayUser.relayReceivers.length < maxRelayLimitPerUser) {
                 return lastRelayUser;
             }
         }
 
         // otherwise, search for a user who not relayed anything yet
-        // todo: why we're using "for-loop" here? it is not safe.
-        var userFound;
-        for (var n in users) {
-            var user = users[n];
+        const freeUser = users.find((user) => {
+            return user.broadcastId === broadcastId &&
+                !user.relayReceivers.length && user.canRelay === true;
+        });
 
-            if (userFound) {
-                continue;
-            } else if (user.broadcastId === broadcastId) {
-                if (!user.relayReceivers.length && user.canRelay === true) {
-                    userFound = user;
-                }
-            }
+        if (freeUser) {
+            return freeUser;
         }
 
-        if (userFound) {
-            return userFound;
-        }
-
-        // need to increase "maxRelayLimitPerUser" in this situation
+        // in case of there are not free users at all
+        // we need to increase "maxRelayLimitPerUser"
         // so that each relaying user can distribute the bandwidth
+
         return broadcastInitiator;
     } catch (e) {
         console.log('getFirstAvailableBroadcaster', e.message);

@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 
 import {
     Button,
@@ -52,7 +51,6 @@ class ErrorBoundary extends React.Component {
         const { error, errorInfo } = this.state;
         const { children, classes } = this.props;
         const message = error && error.toString();
-        console.log(error, errorInfo);
         if (errorInfo) {
             // You can render any custom fallback UI
             return (

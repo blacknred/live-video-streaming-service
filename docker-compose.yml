@@ -14,6 +14,16 @@ services:
     healthcheck:
       test: exit 0
 
+  db:
+    container_name: live-video-streaming-db
+    build: ./db
+    volumes:
+      - ./db/mongo-data:/data/db
+    ports:
+      - '27018:27017'
+    healthcheck:
+      test: exit 0
+
   server:
     container_name: live-video-streaming-server
     build: ./server
@@ -25,12 +35,16 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - REDIS_PASSWORD=default-password
+      - DATABASE_URL=mongodb://db:27017/dev
+      - DATABASE_TEST_URL=mongodb://db:27017/test
       - TOKEN_SECRET=\x02\xf3\xf7r\t\x9f\xee\xbbu\xb1\xe1\x90\xfe
       - TOKEN_SECRET_2=\x02\xf3\xf7r\t\x9f\xee\xbbu\xb1\xe1\x90\xfe'\xab\xa6L6\xdd\x8d[\xccO\xfe
     depends_on:
       - redis
+      - db
     links:
       - redis
+      - db
 
   web-client:
     container_name: live-video-streaming-web-client

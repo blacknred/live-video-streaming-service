@@ -7,7 +7,7 @@ import {
     getOrSetBroadcast,
     viewersUpdated,
     handleStream,
-} from '../signalingConnection';
+} from '../signalingClient';
 
 class Broadcast extends React.Component {
     constructor(props) {

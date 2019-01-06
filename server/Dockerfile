@@ -9,7 +9,9 @@ ENV PATH /usr/src/node_modules/.bin:$PATH
 
 # install and cache app dependencies
 ADD package.json /usr/src/package.json
+RUN npm install yarn -g
 RUN yarn install
+RUN yarn global add pm2
 
 # start app
-CMD ["yarn", "start"]
+CMD ["pm2-runtime", "yarn", "--", "start"]

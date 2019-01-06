@@ -1,10 +1,9 @@
-/* eslint-disable no-return-assign */
 /* eslint-disable no-param-reassign */
 
 const Connection = new window.RTCMultiConnection();
 Connection.enableScalableBroadcast = true; // its mandatory in v3
 // each relaying-user should serve only 1 users
-Connection.maxRelayLimitPerUser = 1;
+// Connection.maxRelayLimitPerUser = 1;
 // we don't need to keep room-opened
 // scalable-broadcast.js will handle stuff itself.
 Connection.autoCloseEntireSession = true;

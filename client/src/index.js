@@ -9,7 +9,7 @@ import Home from './containers/Home';
 import Broadcast from './containers/Broadcast';
 import ErrorBoundary from './ErrorBoundary';
 
-import { setConnection } from './signalingConnection';
+import { setConnection } from './signalingClient';
 import registerServiceWorker from './registerServiceWorker';
 
 setConnection();

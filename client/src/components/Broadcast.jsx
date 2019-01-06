@@ -130,8 +130,8 @@ const ChatMessage = ({
             </ListItemAvatar>
         )}
         <ListItemText
-            primary={message}
-            secondary={author}
+            primary={author + message}
+            //secondary={}
         />
     </ListItem>
 );

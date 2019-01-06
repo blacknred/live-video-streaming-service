@@ -1,4 +1,4 @@
-const socketIO = require('socket.io');
+const socketIO = require('socket.io'); // ({ path: '/signaling' });
 
 var CONST_STRINGS = {
     ROOM_NOT_AVAILABLE: 'Room not available',
@@ -18,15 +18,9 @@ const isAdminAuthorized = false;
 // for scalable-broadcast demos
 let ScalableBroadcast;
 
-/*
-    WebRTC Scalable Broadcast:
-    this module simply initializes socket.io
-    and configures it in a way that
-    single broadcast can be relayed over unlimited users
-    without any bandwidth/CPU usage issues.
-    Everything happens peer-to-peer!
-    peer-to-peer protocol to broadcast your video over 20+ users.
-    */
+
+
+
 module.exports = (server) => {
     let io;
 
@@ -34,9 +28,10 @@ module.exports = (server) => {
         io = socketIO(server);
         io.on('connection', onConnection);
     } catch (e) {
-        io = socketIO.listen(app, {
+        io = socketIO.listen(server, {
             log: false,
-            origins: '*:*'
+            origins: '*:*',
+            // path: '/signaling',
         });
 
         io.set('transports', [
@@ -132,135 +127,134 @@ module.exports = (server) => {
         }
     }
 
-    function handleAdminSocket(socket, params) {
-        if (server.config.enableAdmin !== true || !params.adminUserName || !params.adminPassword) {
-            socket.emit('admin', {
-                error: 'Please pass "adminUserName" and "adminPassword" via socket.io parameters.'
-            });
+    // function handleAdminSocket(socket, params) {
+    //     if (server.config.enableAdmin !== true || !params.adminUserName || !params.adminPassword) {
+    //         socket.emit('admin', {
+    //             error: 'Please pass "adminUserName" and "adminPassword" via socket.io parameters.'
+    //         });
 
-            console.log('invalid-admin', {
-                message: CONST_STRINGS.INVALID_ADMIN_CREDENTIAL,
-                stack: 'name: ' + params.adminUserName + '\n' + 'password: ' + params.adminPassword
-            });
+    //         console.log('invalid-admin', {
+    //             message: CONST_STRINGS.INVALID_ADMIN_CREDENTIAL,
+    //             stack: 'name: ' + params.adminUserName + '\n' + 'password: ' + params.adminPassword
+    //         });
 
-            socket.disconnect(); //disabled admin
-            return;
-        }
+    //         socket.disconnect(); //disabled admin
+    //         return;
+    //     }
 
-        if (!server.config || !isAdminAuthorized(params, server.config)) {
-            socket.emit('admin', {
-                error: 'Invalid admin username or password.'
-            });
+    //     if (!server.config || !isAdminAuthorized(params, server.config)) {
+    //         socket.emit('admin', {
+    //             error: 'Invalid admin username or password.'
+    //         });
 
-            console.log('invalid-admin', {
-                message: CONST_STRINGS.INVALID_ADMIN_CREDENTIAL,
-                stack: 'name: ' + params.adminUserName + '\n' + 'password: ' + params.adminPassword
-            });
+    //         console.log('invalid-admin', {
+    //             message: CONST_STRINGS.INVALID_ADMIN_CREDENTIAL,
+    //             stack: 'name: ' + params.adminUserName + '\n' + 'password: ' + params.adminPassword
+    //         });
 
-            socket.disconnect();
-            return;
-        }
+    //         socket.disconnect();
+    //         return;
+    //     }
 
-        socket.emit('admin', {
-            connected: true
-        });
+    //     socket.emit('admin', {
+    //         connected: true
+    //     });
 
-        adminSocket = socket;
-        socket.on('admin', (message, callback) => {
-            if (!server.config || !isAdminAuthorized(params, server.config)) {
-                socket.emit('admin', {
-                    error: 'Invalid admin username or password.'
-                });
+    //     adminSocket = socket;
+    //     socket.on('admin', (message, callback) => {
+    //         if (!server.config || !isAdminAuthorized(params, server.config)) {
+    //             socket.emit('admin', {
+    //                 error: 'Invalid admin username or password.'
+    //             });
 
-                console.log('invalid-admin', {
-                    message: CONST_STRINGS.INVALID_ADMIN_CREDENTIAL,
-                    stack: 'name: ' + params.adminUserName + '\n' + 'password: ' + params.adminPassword
-                });
+    //             console.log('invalid-admin', {
+    //                 message: CONST_STRINGS.INVALID_ADMIN_CREDENTIAL,
+    //                 stack: 'name: ' + params.adminUserName + '\n' + 'password: ' + params.adminPassword
+    //             });
 
-                socket.disconnect();
-                return;
-            }
+    //             socket.disconnect();
+    //             return;
+    //         }
 
-            callback = callback || function () {};
+    //         callback = callback || function () {};
 
-            if (message.all === true) {
-                sendToAdmin(true);
-            }
+    //         if (message.all === true) {
+    //             sendToAdmin(true);
+    //         }
 
-            if (message.userinfo === true && message.userid) {
-                try {
-                    const user = listOfUsers[message.userid];
-                    if (user) {
-                        callback(user.socket.admininfo || {});
-                    } else {
-                        callback({
-                            error: CONST_STRINGS.USERID_NOT_AVAILABLE
-                        });
-                    }
-                } catch (e) {
-                    console.log('userinfo', e);
-                }
-            }
+    //         if (message.userinfo === true && message.userid) {
+    //             try {
+    //                 const user = listOfUsers[message.userid];
+    //                 if (user) {
+    //                     callback(user.socket.admininfo || {});
+    //                 } else {
+    //                     callback({
+    //                         error: CONST_STRINGS.USERID_NOT_AVAILABLE
+    //                     });
+    //                 }
+    //             } catch (e) {
+    //                 console.log('userinfo', e);
+    //             }
+    //         }
 
-            if (message.clearLogs === true) {
-                // last callback parameter will force to clear logs
-                console.log('', '', callback);
-            }
+    //         if (message.clearLogs === true) {
+    //             // last callback parameter will force to clear logs
+    //             console.log('', '', callback);
+    //         }
 
-            if (message.deleteUser === true) {
-                try {
-                    const user = listOfUsers[message.userid];
+    //         if (message.deleteUser === true) {
+    //             try {
+    //                 const user = listOfUsers[message.userid];
 
-                    if (user) {
-                        if (user.socket.owner) {
-                            // delete listOfRooms[user.socket.owner];
-                        }
+    //                 if (user) {
+    //                     if (user.socket.owner) {
+    //                         // delete listOfRooms[user.socket.owner];
+    //                     }
 
-                        user.socket.disconnect();
-                    }
+    //                     user.socket.disconnect();
+    //                 }
 
-                    // delete listOfUsers[message.userid];
-                    callback(true);
-                } catch (e) {
-                    console.log('deleteUser', e);
-                    callback(false);
-                }
-            }
+    //                 // delete listOfUsers[message.userid];
+    //                 callback(true);
+    //             } catch (e) {
+    //                 console.log('deleteUser', e);
+    //                 callback(false);
+    //             }
+    //         }
 
-            if (message.deleteRoom === true) {
-                try {
-                    const room = listOfRooms[message.roomid];
+    //         if (message.deleteRoom === true) {
+    //             try {
+    //                 const room = listOfRooms[message.roomid];
 
-                    if (room) {
-                        const participants = room.participants;
-                        delete listOfRooms[message.roomid];
-                        participants.forEach((userid) => {
-                            const user = listOfUsers[userid];
-                            if (user) {
-                                user.socket.disconnect();
-                            }
-                        });
-                    }
-                    callback(true);
-                } catch (e) {
-                    console.log('deleteRoom', e);
-                    callback(false);
-                }
-            }
-        });
-    }
+    //                 if (room) {
+    //                     const participants = room.participants;
+    //                     delete listOfRooms[message.roomid];
+    //                     participants.forEach((userid) => {
+    //                         const user = listOfUsers[userid];
+    //                         if (user) {
+    //                             user.socket.disconnect();
+    //                         }
+    //                     });
+    //                 }
+    //                 callback(true);
+    //             } catch (e) {
+    //                 console.log('deleteRoom', e);
+    //                 callback(false);
+    //             }
+    //         }
+    //     });
+    // }
 
     function onConnection(socket) {
+        
+        /* CHECK AND HANDLE PARAMS */
         const params = socket.handshake.query;
-
         if (!params.userid) {
             params.userid = (Math.random() * 100).toString().replace('.', '');
         }
-
         if (!params.sessionid) {
             params.sessionid = (Math.random() * 100).toString().replace('.', '');
         }
-
         if (params.extra) {
             try {
                 params.extra = JSON.parse(params.extra);
@@ -270,27 +264,32 @@ module.exports = (server) => {
         } else {
             params.extra = {};
         }
-
         const socketMessageEvent = params.msgEvent || 'RTCMultiConnection-Message';
-
-        // for admin's record
-        params.socketMessageEvent = socketMessageEvent;
-
-        let autoCloseEntireSession = params.autoCloseEntireSession === true || params.autoCloseEntireSession === 'true';
+        params.socketMessageEvent = socketMessageEvent; // for admin's record
+        let autoCloseEntireSession = `${params.autoCloseEntireSession}` === 'true';
+        const enableScalableBroadcast = `${params.enableScalableBroadcast}` === 'true';
+        let maxParticipantsAllowed;
         const sessionid = params.sessionid;
-        const maxParticipantsAllowed = parseInt(params.maxParticipantsAllowed || 1000) || 1000;
-        const enableScalableBroadcast = params.enableScalableBroadcast === true || params.enableScalableBroadcast === 'true';
-
-        if (params.userid === 'admin') {
-            handleAdminSocket(socket, params);
-            return;
+        try {
+            maxParticipantsAllowed = parseInt(params.maxParticipantsAllowed || 1000);
+        } catch (e) {
+            maxParticipantsAllowed = 1000;
         }
 
+
+        /*  HANDLE ADMIN REQUEST */
+        // if (params.userid === 'admin') {
+        //     handleAdminSocket(socket, params);
+        //     return;
+        // }
+
+
+
+        /* SET SCALABILITY */
         if (enableScalableBroadcast === true) {
             try {
                 if (!ScalableBroadcast) {
-                    // path to scalable broadcast script must be accurate
-                    ScalableBroadcast = require('./scalableBroadcast.js');
+                    ScalableBroadcast = require('./scalability.js');
                 }
                 ScalableBroadcast._ = ScalableBroadcast(socket, params.maxRelayLimitPerUser);
             } catch (e) {
