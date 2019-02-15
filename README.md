@@ -1,1 +1,1 @@
-# video-streaming-service
+# s3m - video streaming service

@@ -24,14 +24,32 @@ services:
     healthcheck:
       test: exit 0
 
-  server:
-    container_name: live-video-streaming-server
-    build: ./server
+  server-signaling:
+    container_name: live-video-streaming-server-signaling
+    build: ./signaling
     ports:
-      - '3000:3000'
+      - '5002:3000'
     volumes:
-      - './server:/usr/src/app'
-      - './server/package.json:/usr/src/package.json'
+      - './signaling:/usr/src/app'
+      - './signaling/package.json:/usr/src/package.json'
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - REDIS_PASSWORD=default-password
+      - TOKEN_SECRET=\x02\xf3\xf7r\t\x9f\xee\xbbu\xb1\xe1\x90\xfe
+      - TOKEN_SECRET_2=\x02\xf3\xf7r\t\x9f\xee\xbbu\xb1\xe1\x90\xfe'\xab\xa6L6\xdd\x8d[\xccO\xfe
+    depends_on:
+      - redis
+    links:
+      - redis
+
+  server-api:
+    container_name: live-video-streaming-server-api
+    build: ./api
+    ports:
+      - '5001:3000'
+    volumes:
+      - './api:/usr/src/app'
+      - './api/package.json:/usr/src/package.json'
     environment:
       - NODE_ENV=${NODE_ENV}
       - REDIS_PASSWORD=default-password
@@ -46,14 +64,14 @@ services:
       - redis
       - db
 
-  web-client:
-    container_name: live-video-streaming-web-client
-    build: ./client
-    volumes:
-      - './client:/usr/src/app'
-      - '/usr/src/app/node_modules'
-    ports:
-      - '3333:3000'
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - CHOKIDAR_USEPOLLING=true
+  # web-client:
+  #   container_name: live-video-streaming-web-client
+  #   build: ./client
+  #   volumes:
+  #     - './client:/usr/src/app'
+  #     - '/usr/src/app/node_modules'
+  #   ports:
+  #     - '3333:3000'
+  #   environment:
+  #     - NODE_ENV=${NODE_ENV}
+  #     - CHOKIDAR_USEPOLLING=true

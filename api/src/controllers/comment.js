@@ -1,5 +1,3 @@
-const boom = require('boom');
-
 const Comment = require('../models/Comment');
 
 // Get all comments
@@ -9,7 +7,7 @@ exports.getComments = async (ctx) => {
         const comments = await Comment.find({ broadcastId });
         ctx.body = comments;
     } catch (err) {
-        throw boom.boomify(err);
+        // throw boom.boomify(err);
     }
 };
 
@@ -21,7 +19,7 @@ exports.addComment = async (ctx) => {
         comment.save();
         ctx.body = comment;
     } catch (err) {
-        throw boom.boomify(err);
+        // throw boom.boomify(err);
     }
 };
 

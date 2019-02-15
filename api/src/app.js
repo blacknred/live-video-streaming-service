@@ -2,12 +2,8 @@ const Koa = require('koa');
 const cors = require('kcors');
 const helmet = require('koa-helmet');
 const logger = require('koa-logger');
-const mongoose = require('mongoose');
 
-const routes = require('./api/routes');
-
-const DB_URI = process.env.NODE_ENV !== 'test' ?
-    process.env.DATABASE_URL : process.env.DATABASE_URL_TEST;
+const routes = require('./routes');
 
 const app = new Koa();
 
@@ -33,11 +29,6 @@ app.use(async (ctx, next) => {
 
 // Router
 app.use(routes.routes());
-
-// Connect to DB
-mongoose.connect(DB_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.log(err));
 
 module.exports = app;
 

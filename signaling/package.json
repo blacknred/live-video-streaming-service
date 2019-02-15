@@ -1,0 +1,31 @@
+{
+  "name": "live-video-streaming-service-signaling-server",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "DEBUG=signaller nodemon app/src/server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/blacknred/live-video-streaming-service.git"
+  },
+  "author": "tretyakov.dmi@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/blacknred/live-video-streaming-service/issues"
+  },
+  "homepage": "https://github.com/blacknred/live-video-streaming-service#readme",
+  "dependencies": {
+    "bluebird": "^3.5.3",
+    "debug": "^4.1.1",
+    "redis": "^2.8.0",
+    "socket.io": "^2.2.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.13.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "nodemon": "^1.18.10"
+  }
+}
